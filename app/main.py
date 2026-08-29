@@ -8,14 +8,19 @@ from .llm import LLMClient
 from .models import QARequest, QAResponse
 from .service import QAService
 from .store import DocumentStore
+from .llm import LLMClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 app = FastAPI(title="Heva Adversarial Q&A SUT", version="1.0.0")
 app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 store = DocumentStore()
-llm = LLMClient() if settings.gemini_api_key else None
-service = QAService(store, llm) if llm else None
+try:
+    llm = LLMClient()
+except Exception as exc:
+    print(f"LLM initialization failed: {exc}")
+    llm = None
 
+service = QAService(store, llm) if llm else None
 
 @app.get("/", include_in_schema=False)
 def frontend():
@@ -26,10 +31,10 @@ def frontend():
 def health():
     return {
         "status": "ok",
-        "llm_configured": bool(settings.gemini_api_key),
-        "model": settings.gemini_model,
+        "llm_configured": llm is not None,
+        "provider": llm.provider if llm else None,
+        "model": llm.model if llm else None,
     }
-
 
 @app.get("/documents")
 def documents():
@@ -60,5 +65,55 @@ def delete_document(document_id: str):
 @app.post("/qa", response_model=QAResponse)
 def qa(request: QARequest):
     if service is None:
-        raise HTTPException(503, "GEMINI_API_KEY is not configured")
-    return service.ask(request.question)
+        raise HTTPException(
+            status_code=503,
+            detail="No LLM provider is configured or available.",
+        )
+
+    try:
+        return service.ask(request.question)
+
+    except Exception as exc:
+        import traceback
+
+        print("\n" + "=" * 70)
+        print("LLM ERROR")
+        print("=" * 70)
+        print(f"Provider: {llm.provider if llm else 'unknown'}")
+        print(f"Model: {llm.model if llm else 'unknown'}")
+        print(f"Error type: {type(exc).__name__}")
+        print(f"Error: {exc}")
+        traceback.print_exc()
+        print("=" * 70 + "\n")
+
+        error_message = str(exc).lower()
+
+        # Gemini quota/rate-limit detection
+        if any(
+            x in error_message
+            for x in [
+                "quota",
+                "resource exhausted",
+                "rate limit",
+                "429",
+                "too many requests",
+            ]
+        ):
+            detail = (
+                f"LLM quota exhausted or rate limit reached. "
+                f"Provider={llm.provider if llm else 'unknown'}, "
+                f"Model={llm.model if llm else 'unknown'}. "
+                f"Original error: {exc}"
+            )
+        else:
+            detail = (
+                f"LLM request failed. "
+                f"Provider={llm.provider if llm else 'unknown'}, "
+                f"Model={llm.model if llm else 'unknown'}. "
+                f"Error: {exc}"
+            )
+
+        raise HTTPException(
+            status_code=503,
+            detail=detail,
+        ) from exc
