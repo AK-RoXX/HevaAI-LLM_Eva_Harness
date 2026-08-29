@@ -5,9 +5,8 @@ from .store import DocumentStore
 
 
 class QAService:
-    def __init__(self, store: DocumentStore, llm: LLMClient) -> None:
-        self.store = store
-        self.llm = llm
+    def __init__(self, store: DocumentStore, llm: LLMClient | None):
+        self.store, self.llm = store, llm
 
     def ask(self, question: str) -> QAResponse:
         retrieved = self.store.search(question, settings.top_k)
@@ -17,24 +16,23 @@ class QAService:
                 confidence=0.0,
                 abstained=True,
                 citations=[],
-                model=settings.llm_model,
+                model=settings.gemini_model,
             )
-
-        evidence = [(c.chunk_id, c.text, score) for c, score in retrieved]
+        evidence = [(c.chunk_id, c.text, s) for c, s in retrieved]
         result = self.llm.answer(question, evidence)
         citations = [
             Citation(
                 chunk_id=c.chunk_id,
                 document_id=c.document_id,
                 text=c.text,
-                relevance=max(0.0, min(1.0, score)),
+                relevance=max(0, min(1, s)),
             )
-            for c, score in retrieved
+            for c, s in retrieved
         ]
         return QAResponse(
-            answer=str(result.get("answer", "")),
-            confidence=max(0.0, min(1.0, float(result.get("confidence", 0.0)))),
-            abstained=bool(result.get("abstained", False)),
+            answer=str(result["answer"]),
+            confidence=max(0, min(1, float(result["confidence"]))),
+            abstained=bool(result["abstained"]),
             citations=citations,
-            model=settings.llm_model,
+            model=settings.gemini_model,
         )

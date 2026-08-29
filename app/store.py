@@ -2,7 +2,6 @@ from dataclasses import dataclass
 import re
 from pathlib import Path
 from threading import Lock
-
 import fitz
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -29,17 +28,16 @@ class DocumentStore:
         if suffix in {".txt", ".md"}:
             return data.decode("utf-8", errors="replace")
         if suffix == ".pdf":
-            doc = fitz.open(stream=data, filetype="pdf")
-            return "\n".join(page.get_text() for page in doc)
+            with fitz.open(stream=data, filetype="pdf") as doc:
+                return "\n".join(page.get_text() for page in doc)
         raise ValueError("Only .txt, .md, and .pdf files are supported")
 
     @staticmethod
-    def chunk_text(text: str, size: int = 900, overlap: int = 120) -> list[str]:
+    def chunk_text(text: str, size: int = 650, overlap: int = 100) -> list[str]:
         text = re.sub(r"\s+", " ", text).strip()
         if not text:
             return []
-        chunks = []
-        start = 0
+        chunks, start = [], 0
         while start < len(text):
             end = min(len(text), start + size)
             if end < len(text):
@@ -55,11 +53,11 @@ class DocumentStore:
     def add_document(self, document_id: str, filename: str, text: str) -> int:
         parts = self.chunk_text(text)
         with self._lock:
-            self._chunks = [c for c in self._chunks if c.document_id != document_id]
             self._documents[document_id] = filename
+            self._chunks = [c for c in self._chunks if c.document_id != document_id]
             self._chunks.extend(
-                Chunk(f"{document_id}:c{i:04d}", document_id, part)
-                for i, part in enumerate(parts)
+                Chunk(f"{document_id}:c{i:04d}", document_id, p)
+                for i, p in enumerate(parts)
             )
             self._rebuild()
         return len(parts)
@@ -74,16 +72,17 @@ class DocumentStore:
 
     def list_documents(self) -> list[dict]:
         return [
-            {"document_id": doc_id, "filename": filename}
-            for doc_id, filename in sorted(self._documents.items())
+            {"document_id": i, "filename": f}
+            for i, f in sorted(self._documents.items())
         ]
 
     def _rebuild(self) -> None:
         if not self._chunks:
-            self._vectorizer = None
-            self._matrix = None
+            self._vectorizer = self._matrix = None
             return
-        self._vectorizer = TfidfVectorizer(lowercase=True, ngram_range=(1, 2), sublinear_tf=True)
+        self._vectorizer = TfidfVectorizer(
+            lowercase=True, ngram_range=(1, 2), sublinear_tf=True
+        )
         self._matrix = self._vectorizer.fit_transform([c.text for c in self._chunks])
 
     def search(self, query: str, top_k: int = 5) -> list[tuple[Chunk, float]]:

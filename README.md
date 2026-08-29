@@ -1,52 +1,96 @@
 # Heva AI Assignment 3 — Adversarially Evaluated Document Q&A
-## **Day 1**
 
-A document question-answering system built for Heva AI (AI ML Eng)Assignment.
+A complete Q&A system + custom adversarial evaluation harness for the Heva AI ML Engineer Assignment 3. The assignment requires a working LLM system, a >=50-case verified ground truth set, hallucination detection, adversarial inputs, calibration testing, failure clustering, regression tests and a structured report. This implementation does not use RAGAS, TruLens or DeepEval.
 
-The assignment explicitly asks for a working LLM system that accepts text and produces structured output, followed by a custom evaluation harness probing hallucination, adversarial inputs, distribution shift, failure clustering, confidence calibration, and regressions. Pre-built evaluation frameworks such as RAGAS, TruLens, and DeepEval are not used.
+## Architecture
 
-## Design choice
+`Documents -> extraction -> deterministic TF-IDF retrieval -> Gemini structured generation -> answer/confidence/abstention/citations`
 
-The system is **citation-first and abstention-aware** rather than a naive `question -> LLM` pipeline:
+The deliberate design choice is **citation-first, abstention-aware grounding**. Retrieved evidence is passed to the model as data, while document instructions are explicitly treated as untrusted content.
 
-1. Documents are chunked with stable IDs.
-2. Relevant evidence is retrieved before generation.
-3. The model must answer only from supplied evidence.
-4. The structured response contains an answer, confidence, citations, and an explicit `abstained` flag.
-5. If evidence is insufficient, the system is instructed to abstain instead of filling gaps.
+## Setup — Windows PowerShell
 
-This gives the evaluation harness observable evidence for hallucination and calibration, and creates meaningful adversarial failure modes.
-
-## Stack
-
-- Python 3.11+
-- FastAPI
-- Pydantic
-- PyMuPDF for PDF extraction
-- scikit-learn TF-IDF retrieval (deterministic baseline)
-- GeminiAI-API (provider can be changed)
-
-## Run
-
-```bash
+```powershell
 python -m venv .venv
-# Windows: .venv\\Scripts\\activate
-# Linux/macOS: source .venv/bin/activate
-pip install -r requirements.txt
-copy .env.example .env  # Windows
-# cp .env.example .env  # Linux/macOS
-uvicorn app.main:app --reload
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -r requirements.txt
+Copy-Item .env.example .env
 ```
 
-Then open `http://127.0.0.1:8000/docs`.
+Put your Gemini key in `.env`:
 
-## API
+```env
+GEMINI_API_KEY=your_key
+GEMINI_MODEL=gemini-3.6-flash
+LLM_TEMPERATURE=0
+LLM_SEED=42
+TOP_K=5
+ABSTAIN_SCORE_THRESHOLD=0.08
+```
 
-- `POST /documents` — upload a `.txt`, `.md`, or `.pdf`
-- `POST /qa` — ask a question against the indexed documents
-- `GET /documents` — list indexed documents
-- `DELETE /documents/{id}` — remove a document
+## Run the application
 
-## Next phase
+```powershell
+python -m uvicorn app.main:app --reload
+```
 
-The evaluation harness will be added separately so that the SUT remains clean. It will include a manually verified >=50-case ground truth dataset, adversarial variants, programmatic source-grounded hallucination checks, calibration metrics/curves, failure clustering, and regression testing.
+Open `http://127.0.0.1:8000/` for the frontend or `/docs` for Swagger.
+
+## Build adversarial dataset
+
+The human-authored ground truth contains 60 cases in `dataset/ground_truth.jsonl`. The reference document is `data/eval_reference.md`. Generate adversarial variants:
+
+```powershell
+python -m eval.adversarial
+```
+
+This produces >100 additional cases across irrelevant-context injection, instruction injection, paraphrase/distribution-shift wording and subtle factual errors.
+
+## Run evaluations
+
+Start the API first, then:
+
+```powershell
+python -m eval.runner dataset/ground_truth.jsonl
+python -m eval.runner dataset/adversarial.jsonl
+```
+
+For a quick smoke test:
+
+```powershell
+python -m eval.runner dataset/ground_truth.jsonl --limit 10
+```
+
+Results are saved under `eval/results/`.
+
+## Regression tests
+
+After establishing a known-good baseline:
+
+```powershell
+python -m eval.regression save
+```
+
+After a prompt/model/retrieval change:
+
+```powershell
+python -m eval.runner dataset/ground_truth.jsonl --no-upload
+python -m eval.regression check
+```
+
+## Report
+
+```powershell
+python -m eval.report
+```
+
+The report includes accuracy, abstention rate, hallucination rate, ECE, Brier score, accuracy by input type and preserved failed cases for causal clustering.
+
+## Ground truth methodology
+
+The 60 ground-truth cases are manually authored against the bundled reference document. Each case records the expected answer, answerability, category, difficulty and human-authored evidence keywords. LLM output is never used as ground truth. Adversarial variants inherit their expected behavior from their verified parent case.
+
+## Hallucination detection
+
+The harness uses source-grounded checks rather than simple answer-string equality: it computes semantic similarity between the answer and retrieved evidence using TF-IDF bigrams, checks verified evidence facts, and flags unsupported/invented numerical claims. The resulting signals are retained per test so the evaluator can inspect false positives/negatives. For a stronger second-stage judge, a Gemini claim-verification module can be added without changing the SUT.

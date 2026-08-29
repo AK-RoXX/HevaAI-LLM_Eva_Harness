@@ -1,6 +1,9 @@
 .venv/
+.env
 __pycache__/
 .pytest_cache/
-.env
 *.pyc
+eval/results/
 debug.txt
+format.sh
+Assignment.pdf

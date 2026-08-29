@@ -1,26 +1,34 @@
 from uuid import uuid4
-
+from pathlib import Path
 from fastapi import FastAPI, File, HTTPException, UploadFile
-
+from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 from .config import settings
 from .llm import LLMClient
 from .models import QARequest, QAResponse
 from .service import QAService
 from .store import DocumentStore
 
-app = FastAPI(title="Heva Adversarial Q&A SUT", version="0.1.0")
+BASE_DIR = Path(__file__).resolve().parent.parent
+app = FastAPI(title="Heva Adversarial Q&A SUT", version="1.0.0")
+app.mount("/static", StaticFiles(directory=BASE_DIR / "static"), name="static")
 store = DocumentStore()
-llm = None
+llm = LLMClient() if settings.gemini_api_key else None
+service = QAService(store, llm) if llm else None
 
-if settings.gemini_api_key:
-    llm = LLMClient()
 
-service = QAService(store, llm)
+@app.get("/", include_in_schema=False)
+def frontend():
+    return FileResponse(BASE_DIR / "static" / "index.html")
 
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {
+        "status": "ok",
+        "llm_configured": bool(settings.gemini_api_key),
+        "model": settings.gemini_model,
+    }
 
 
 @app.get("/documents")
@@ -36,32 +44,21 @@ async def upload_document(file: UploadFile = File(...)):
         text = store.extract(file.filename or "document.txt", data)
         count = store.add_document(document_id, file.filename or "document.txt", text)
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(400, str(exc)) from exc
     if count == 0:
-        raise HTTPException(status_code=400, detail="Document contains no extractable text")
+        raise HTTPException(400, "Document contains no extractable text")
     return {"document_id": document_id, "filename": file.filename, "chunks": count}
 
 
 @app.delete("/documents/{document_id}")
 def delete_document(document_id: str):
     if not store.delete_document(document_id):
-        raise HTTPException(status_code=404, detail="Document not found")
+        raise HTTPException(404, "Document not found")
     return {"deleted": document_id}
 
 
 @app.post("/qa", response_model=QAResponse)
 def qa(request: QARequest):
-    if not settings.gemini_api_key:
-        raise HTTPException(status_code=503, detail="LLM_API_KEY is not configured")
+    if service is None:
+        raise HTTPException(503, "GEMINI_API_KEY is not configured")
     return service.ask(request.question)
-
-
-# @app.post("/qa", response_model=QAResponse)
-# def qa(request: QARequest):
-#     if llm is None:
-#         raise HTTPException(
-#             status_code=503,
-#             detail="GEMINI_API_KEY is not configured"
-#         )
-
-#     return service.ask(request.question)

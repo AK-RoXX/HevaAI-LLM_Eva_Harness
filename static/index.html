@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Heva Q&A — Adversarial SUT</title>
+    <link rel="stylesheet" href="/static/style.css" />
+  </head>
+  <body>
+    <div class="shell">
+      <header>
+        <div>
+          <span class="eyebrow">HEVA AI · ASSIGNMENT 3</span>
+          <h1>Grounded Document Q&A</h1>
+          <p>
+            Ask questions against your documents with evidence, confidence and
+            abstention.
+          </p>
+        </div>
+        <div id="status" class="status">Checking API…</div>
+      </header>
+      <main>
+        <section class="panel upload">
+          <div class="panel-head">
+            <h2>1 · Add evidence</h2>
+            <span id="docCount">0 documents</span>
+          </div>
+          <label class="drop" id="drop"
+            ><input id="file" type="file" accept=".pdf,.txt,.md" /><strong
+              >Drop a document here</strong
+            ><span>or click to browse · PDF, TXT, MD</span></label
+          >
+          <div id="docs" class="docs"></div>
+        </section>
+        <section class="panel ask">
+          <div class="panel-head">
+            <h2>2 · Ask a question</h2>
+            <span>Evidence-grounded</span>
+          </div>
+          <textarea
+            id="question"
+            placeholder="e.g. What was the company's revenue in 2024?"
+          ></textarea
+          ><button id="ask">Ask the documents <span>↗</span></button>
+          <div id="result" class="result hidden"></div>
+        </section>
+      </main>
+      <footer>
+        <span
+          >Deterministic baseline · TF-IDF retrieval · Gemini structured
+          output</span
+        ><a href="/docs" target="_blank">API Docs ↗</a>
+      </footer>
+    </div>
+    <script src="/static/app.js"></script>
+  </body>
+</html>
