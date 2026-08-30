@@ -245,8 +245,7 @@ python -m eval.regression check --results eval/results/ground_truth_results.json
 - `eval/results/ground_truth_<provider>_<model>.jsonl`: provider-specific ground-truth results.
 - `eval/results/adversarial_<provider>_<model>.jsonl`: provider-specific adversarial results.
 - `eval/regression_baseline.json`: baseline metrics and case snapshots.
-- `reports/evaluation_report.md`: current generated report. Pass `--ground-truth`, `--adversarial`, and `--output` to generate a provider-specific report without overwriting another run.
-- `reports/baseline_vs_improved.md`, `reports/failure_analysis.md`, and `reports/figures/`: supplementary artifacts from their helper scripts.
+- `reports/evaluation_report.md`: generated on demand by `python -m eval.report_phase4`. Pass `--ground-truth`, `--adversarial`, and `--output` to generate a provider-specific report without overwriting another run.
 
 ## Reproducing the Evaluation
 
