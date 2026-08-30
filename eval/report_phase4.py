@@ -58,6 +58,28 @@ def section(rows, title):
     return lines + category_table(rows)
 
 
+def provider_comparison():
+    result_dir = ROOT / "eval" / "results"
+    files = sorted(result_dir.glob("ground_truth_*.jsonl"))
+    rows_by_provider = {}
+    for path in files:
+        rows = load(path)
+        valid = [row for row in rows if row.get("status") == "ok"]
+        if valid and valid[0].get("provider"):
+            rows_by_provider[valid[0]["provider"] + "/" + str(valid[0].get("model", ""))] = valid
+    if len(rows_by_provider) < 2:
+        return []
+    lines = ["", "## Provider comparison", "", "This comparison uses the result files available in the repository. The providers share the dataset, retrieved evidence, retrieval pipeline, prompt, normalization, and metric implementation; only generation differs. Results are benchmark-specific and are not universal model claims.", "", "| Metric | " + " | ".join(rows_by_provider) + " |", "|---|" + "---:|" * len(rows_by_provider)]
+    metrics = [("Strict accuracy", lambda rs: sum(bool(r.get("strict_correct", r.get("correct"))) for r in rs) / len(rs)), ("Fact-aware accuracy", lambda rs: sum(bool(r.get("fact_aware_correct", r.get("correct"))) for r in rs) / len(rs)), ("Grounding score", lambda rs: avg(r.get("deterministic_grounding_score") for r in rs)), ("Hallucination rate", lambda rs: sum(bool(r.get("hallucination")) for r in rs) / len(rs)), ("Average latency (ms)", lambda rs: avg(r.get("latency_ms") for r in rs)), ("Hit@1", lambda rs: avg(r.get("retrieval_metrics", {}).get("hit_at_1") for r in rs)), ("Hit@5", lambda rs: avg(r.get("retrieval_metrics", {}).get("hit_at_5") for r in rs)), ("MRR", lambda rs: avg(r.get("retrieval_metrics", {}).get("mrr") for r in rs))]
+    for label, fn in metrics:
+        values = []
+        for rs in rows_by_provider.values():
+            value = fn(rs)
+            values.append(f"{value:.3f}" if label == "Average latency (ms)" else f"{value:.3f}")
+        lines.append("| " + label + " | " + " | ".join(values) + " |")
+    return lines
+
+
 def main(output, ground_truth=None, adversarial=None):
     gt = load(ground_truth or ROOT / "eval" / "results" / "ground_truth_results.jsonl")
     adv_path = Path(adversarial) if adversarial else ROOT / "eval" / "results" / "adversarial_results.jsonl"
@@ -77,7 +99,8 @@ def main(output, ground_truth=None, adversarial=None):
         for row in worst:
             clean = lambda value: str(value or "").replace("|", "/")[:100]
             lines.append(f"| {row.get('id')} | {row.get('category')} | {clean(row.get('expected_answer'))} | {clean(row.get('actual_answer'))} | {float(row.get('confidence', 0) or 0):.2f} | {float(row.get('deterministic_grounding_score', 0) or 0):.3f} |")
-    lines += ["", "## 11. Failure analysis", "", "The detailed worst-case table above identifies high-confidence incorrect answers, arithmetic beyond the evidence, and injection susceptibility. These are answer-generation failures even when retrieval succeeds.", "", "## 12. Limitations", "", "- `evidence_keywords` are lexical proxies, not perfect gold chunk annotations.", "- Context precision/recall measure keyword presence, not semantic relevance.", "- Deterministic grounding is not claim-level faithfulness.", "- Results depend on the local Ollama model and hardware.", "", "## 13. Baseline results", "", "The Phase 4 regression baseline is stored in `eval/regression_baseline.json` and includes answer, retrieval, grounding, latency, calibration, and Brier metrics. Regression failure requires at least two threshold breaches.", "", "## 14. Recommended next improvements", "", "- Improve retrieval for paraphrase, entity, negation, and multi-hop queries before changing the model or prompt.", "- Add independently reviewed chunk-level relevance labels.", "- Add structured claim checks for dates, entities, and numerical reasoning.", "- Calibrate confidence and abstention thresholds on a held-out set."]
+    lines += provider_comparison()
+    lines += ["", "## 11. Failure analysis", "", "The detailed worst-case table above identifies high-confidence incorrect answers, arithmetic beyond the evidence, and injection susceptibility. These are answer-generation failures even when retrieval succeeds.", "", "## 12. Limitations", "", "- `evidence_keywords` are lexical proxies, not perfect gold chunk annotations.", "- Context precision/recall measure keyword presence, not semantic relevance.", "- Deterministic grounding is not claim-level faithfulness.", "- Results depend on the selected provider, local model, API availability, and hardware.", "- The fixed benchmark has no independently recorded human verification or gold chunk annotations.", "", "## 13. Baseline results", "", "The Phase 4 regression baseline is stored in `eval/regression_baseline.json` and includes answer, retrieval, grounding, latency, calibration, and Brier metrics. Regression failure requires at least two threshold breaches.", "", "## 14. Recommended next improvements", "", "- Improve retrieval for paraphrase, entity, negation, and multi-hop queries before changing the model or prompt.", "- Add independently reviewed chunk-level relevance labels and contradictory-evidence cases.", "- Add structured claim checks for dates, entities, and numerical reasoning.", "- Calibrate confidence and abstention thresholds on a held-out set."]
     Path(output).write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"Report saved to {output}")
 
