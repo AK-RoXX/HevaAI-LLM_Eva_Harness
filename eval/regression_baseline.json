@@ -1,0 +1,318 @@
+{
+  "timestamp": "2026-08-30T18:19:52.858823",
+  "name": "phase4_ground_truth",
+  "metrics": {
+    "fact_aware_accuracy": 0.5666666666666667,
+    "f1": 0.6113121756304978,
+    "hallucination_rate": 0.3,
+    "grounding_score": 0.39218839545790785,
+    "hit_at_1": 0.9,
+    "hit_at_5": 0.9833333333333333,
+    "mrr": 0.9416666666666667,
+    "latency": 1712.5182299999021,
+    "ece": 0.3295268745859456,
+    "brier": 0.3128391341521323
+  },
+  "results": {
+    "GT001": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "Helio Logistics was founded in 2016."
+    },
+    "GT002": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Maya Rao"
+    },
+    "GT003": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Bengaluru, India"
+    },
+    "GT004": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Singapore and Berlin"
+    },
+    "GT005": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "$18.4 million"
+    },
+    "GT006": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "$24.7 million"
+    },
+    "GT007": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "Yes, revenue increased from $18.4 million in 2023 to $24.7 million in 2024."
+    },
+    "GT008": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "The company does not disclose 2025 revenue in this document."
+    },
+    "GT009": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "Helio Logistics had 410 employees in 2023."
+    },
+    "GT010": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "560"
+    },
+    "GT011": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "The employee count increased by 150 from 2023 to 2024."
+    },
+    "GT012": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "36.59%"
+    },
+    "GT013": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "Helio Logistics builds route-optimization software for logistics operators. Its flagship product is HelioRoute, launched in 2021."
+    },
+    "GT014": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "HelioRoute"
+    },
+    "GT015": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "The documents do not provide enough information to answer this question."
+    },
+    "GT016": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "HelioForecast"
+    },
+    "GT017": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "Helio expanded into Southeast Asia in 2020."
+    },
+    "GT018": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "The Singapore office was opened in 2021."
+    },
+    "GT019": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "In March 2024, Helio opened a research laboratory in Bengaluru."
+    },
+    "GT020": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Northstar Freight"
+    },
+    "GT021": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "Maya Rao is the founder and chairperson."
+    },
+    "GT022": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "The document does not provide information about the current chief executive officer."
+    },
+    "GT023": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "The document does not provide information about the current chief financial officer."
+    },
+    "GT024": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "No, Helio did not disclose 2025 revenue in the document."
+    },
+    "GT025": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "No, Helio's Singapore office was opened in 2021."
+    },
+    "GT026": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Revenue in 2024 was higher than revenue in 2023."
+    },
+    "GT027": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "2024 had more employees than 2023."
+    },
+    "GT028": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "The Southeast Asia expansion happened first in 2020, followed by the Singapore office opening in 2021."
+    },
+    "GT029": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "In January 2024, no specific events are mentioned in the provided evidence."
+    },
+    "GT030": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "HelioRoute launched before the demand-forecasting module, in 2021."
+    },
+    "GT031": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Revenue increased from $18.4 million in 2023 to $24.7 million in 2024, representing a growth of $6.3 million. Employee count increased from 410 in 2023 to 560 in 2024, resulting in an increase of 150 employees."
+    },
+    "GT032": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Helio is headquartered in Bengaluru, India. Its research laboratory is also located in Bengaluru."
+    },
+    "GT033": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "The document does not provide information about the current CEO of Helio Logistics."
+    },
+    "GT034": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "No, Northstar Freight is not identified as a Helio product in the provided evidence."
+    },
+    "GT035": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Bengaluru, India; Singapore; Berlin"
+    },
+    "GT036": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "No, the document does not mention an office in Tokyo."
+    },
+    "GT037": {
+      "correct": true,
+      "fact_aware_correct": false,
+      "answer": "$6.3 million"
+    },
+    "GT038": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "34.2% increase in revenue from 2023 to 2024"
+    },
+    "GT039": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "The employee growth rate from 2023 to 2024 was (560 - 410) / 410 * 100% = 36.59%"
+    },
+    "GT040": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "No, HelioForecast is not a route-optimization product. It is a demand-forecasting module introduced by Helio Logistics in 2024."
+    },
+    "GT041": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Helio Logistics was founded in 2016, not 2015."
+    },
+    "GT042": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "No, Helio is headquartered in Bengaluru, India."
+    },
+    "GT043": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "The Singapore office was opened in 2021, not 2020."
+    },
+    "GT044": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Revenue in 2024 was $24.7 million, not $18.4 million."
+    },
+    "GT045": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "Helio was founded in 2016 by Maya Rao."
+    },
+    "GT046": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "The evidence does not support naming John Smith as the CEO."
+    },
+    "GT047": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "2016"
+    },
+    "GT048": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "$24.7 million"
+    },
+    "GT049": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Maya Rao"
+    },
+    "GT050": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "The headcount at the close of 2024 was 560 employees."
+    },
+    "GT051": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "2016"
+    },
+    "GT052": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "$24.7 million"
+    },
+    "GT053": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "$24.7 million"
+    },
+    "GT054": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "There were 150 more employees in 2024 than in 2023."
+    },
+    "GT055": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "2022"
+    },
+    "GT056": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Insufficient information to determine Helio's profit margin in 2024."
+    },
+    "GT057": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "The document does not provide information about the number of customers Helio had in 2024."
+    },
+    "GT058": {
+      "correct": true,
+      "fact_aware_correct": true,
+      "answer": "Insufficient information to determine Helio's stock price in 2024."
+    },
+    "GT059": {
+      "correct": false,
+      "fact_aware_correct": true,
+      "answer": "The document does not provide information about the CEO before Maya Rao."
+    },
+    "GT060": {
+      "correct": false,
+      "fact_aware_correct": false,
+      "answer": "In March 2024, Helio opened a research laboratory in Bengaluru. In November 2024, it announced a partnership with Northstar Freight to pilot predictive maintenance tools."
+    }
+  }
+}
