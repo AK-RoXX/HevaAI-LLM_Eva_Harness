@@ -1,6 +1,6 @@
 from .config import settings
 from .llm import LLMClient
-from .models import Citation, QAResponse
+from .models import Citation, QAResponse, RetrievalTrace
 from .store import DocumentStore
 
 
@@ -15,7 +15,17 @@ class QAService:
 
     def ask(self, question: str) -> QAResponse:
 
-        if self.llm is None:
+        response, _ = self._ask(question)
+        return response
+
+    def ask_with_trace(self, question: str, llm_override: LLMClient | None = None) -> tuple[QAResponse, RetrievalTrace]:
+        return self._ask(question, llm_override)
+
+    def _ask(self, question: str, llm_override: LLMClient | None = None) -> tuple[QAResponse, RetrievalTrace]:
+
+        active_llm = llm_override or self.llm
+
+        if active_llm is None:
             raise RuntimeError(
                 "No LLM provider is configured."
             )
@@ -30,7 +40,7 @@ class QAService:
             or retrieved[0][1]
             < settings.abstain_score_threshold
         ):
-            return QAResponse(
+            response = QAResponse(
                 answer=(
                     "The documents do not provide enough "
                     "information to answer this question."
@@ -38,15 +48,33 @@ class QAService:
                 confidence=0.0,
                 abstained=True,
                 citations=[],
-                model=self.llm.model_name,
+                model=active_llm.model_name,
             )
+            trace = RetrievalTrace(
+                retrieved_chunks=[
+                    {
+                        "chunk_id": chunk.chunk_id,
+                        "rank": rank,
+                        "score": max(0, min(1, score)),
+                        "text": chunk.text,
+                        "document_id": chunk.document_id,
+                    }
+                    for rank, (chunk, score) in enumerate(retrieved, 1)
+                ],
+                retrieval_threshold=settings.abstain_score_threshold,
+                retrieval_abstained=True,
+                abstention_reason=(
+                    "no_retrieval_results" if not retrieved else "below_retrieval_threshold"
+                ),
+            )
+            return response, trace
 
         evidence = [
             (c.chunk_id, c.text, s)
             for c, s in retrieved
         ]
 
-        result = self.llm.answer(
+        result = active_llm.answer(
             question,
             evidence,
         )
@@ -64,7 +92,7 @@ class QAService:
             for c, s in retrieved
         ]
 
-        return QAResponse(
+        response = QAResponse(
             answer=str(result["answer"]),
             confidence=max(
                 0,
@@ -77,5 +105,20 @@ class QAService:
                 result["abstained"]
             ),
             citations=citations,
-            model=self.llm.model_name,
+            model=active_llm.model_name,
         )
+        trace = RetrievalTrace(
+            retrieved_chunks=[
+                {
+                    "chunk_id": chunk.chunk_id,
+                    "rank": rank,
+                    "score": max(0, min(1, score)),
+                    "text": chunk.text,
+                    "document_id": chunk.document_id,
+                }
+                for rank, (chunk, score) in enumerate(retrieved, 1)
+            ],
+            retrieval_threshold=settings.abstain_score_threshold,
+            retrieval_abstained=False,
+        )
+        return response, trace

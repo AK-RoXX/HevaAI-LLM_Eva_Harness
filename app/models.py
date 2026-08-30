@@ -16,5 +16,27 @@ class QAResponse(BaseModel):
     model: str
 
 
+class RetrievalTraceItem(BaseModel):
+    chunk_id: str
+    rank: int
+    score: float = Field(ge=0, le=1)
+    text: str
+    document_id: str
+
+
+class RetrievalTrace(BaseModel):
+    retrieved_chunks: list[RetrievalTraceItem]
+    retrieval_threshold: float
+    retrieval_abstained: bool
+    abstention_reason: str | None = None
+
+
 class QARequest(BaseModel):
     question: str = Field(min_length=1, max_length=4000)
+
+
+class EvalQARequest(QARequest):
+    """Evaluation-only provider override; the public /qa contract is unchanged."""
+
+    provider: str | None = None
+    model: str | None = None

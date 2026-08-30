@@ -5,10 +5,9 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from .config import settings
 from .llm import LLMClient
-from .models import QARequest, QAResponse
+from .models import EvalQARequest, QARequest, QAResponse
 from .service import QAService
 from .store import DocumentStore
-from .llm import LLMClient
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 app = FastAPI(title="Heva Adversarial Q&A SUT", version="1.0.0")
@@ -21,6 +20,7 @@ except Exception as exc:
     llm = None
 
 service = QAService(store, llm) if llm else None
+evaluation_clients = {}
 
 @app.get("/", include_in_schema=False)
 def frontend():
@@ -117,3 +117,22 @@ def qa(request: QARequest):
             status_code=503,
             detail=detail,
         ) from exc
+
+
+@app.post("/qa/eval")
+def qa_eval(request: EvalQARequest):
+    """Evaluation-only endpoint; /qa remains backward compatible."""
+    if service is None:
+        raise HTTPException(status_code=503, detail="No LLM provider is configured or available.")
+    try:
+        override = None
+        if request.provider or request.model:
+            key = (request.provider or settings.llm_provider, request.model or "")
+            override = evaluation_clients.get(key)
+            if override is None:
+                override = LLMClient(provider=key[0], model=request.model)
+                evaluation_clients[key] = override
+        response, trace = service.ask_with_trace(request.question, override)
+        return {"response": response.model_dump(), "retrieval_trace": trace.model_dump()}
+    except Exception as exc:
+        raise HTTPException(status_code=503, detail=f"LLM request failed: {exc}") from exc
