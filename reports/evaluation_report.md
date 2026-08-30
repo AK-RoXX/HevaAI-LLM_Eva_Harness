@@ -125,14 +125,14 @@ This comparison uses the result files available in the repository. The providers
 
 | Metric | gemini/gemini-3.6-flash | ollama/qwen2.5-coder:14b |
 |---|---:|---:|
-| Strict accuracy | 0.000 | 0.600 |
-| Fact-aware accuracy | 1.000 | 0.900 |
-| Grounding score | 0.665 | 0.566 |
-| Hallucination rate | 0.000 | 0.000 |
-| Average latency (ms) | 32872.318 | 1597.993 |
-| Hit@1 | 1.000 | 1.000 |
-| Hit@5 | 1.000 | 1.000 |
-| MRR | 1.000 | 1.000 |
+| Strict accuracy | 0.000 | 0.333 |
+| Fact-aware accuracy | 1.000 | 0.533 |
+| Grounding score | 0.668 | 0.417 |
+| Hallucination rate | 0.000 | 0.250 |
+| Average latency (ms) | 3019.780 | 1629.338 |
+| Hit@1 | 1.000 | 0.900 |
+| Hit@5 | 1.000 | 0.983 |
+| MRR | 1.000 | 0.928 |
 
 ## 11. Failure analysis
 
