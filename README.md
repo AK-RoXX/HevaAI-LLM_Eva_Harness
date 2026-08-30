@@ -37,6 +37,118 @@ Hit@1, Hit@3, Hit@5, MRR, context precision, and context recall use `evidence_ke
 
 The deterministic grounding score combines answer-to-citation lexical support, keyword coverage, numeric support, and the hallucination signal. The evaluator records both LLM `model_confidence` and deterministic `heva_confidence`; ECE and Brier use HEVA confidence. Latency is client-observed request time and includes average, median, P95, and P99 where available.
 
+## Evaluation Formulas
+
+The evaluator uses the following formulas. Unless noted otherwise, metrics are calculated per case and then averaged across the relevant set of cases. Answer-quality metrics are calculated for answerable cases; unanswerable cases are evaluated through abstention and grounded-negative states.
+
+### Text normalization and answer quality
+
+Text is lowercased, punctuation is removed, Unicode punctuation is normalized, and repeated whitespace is collapsed. Numbers, decimals, currencies, percentages, and common magnitude suffixes are preserved.
+
+- **Exact match**
+
+  `ExactMatch = 1` when `normalize(reference) = normalize(prediction)`, otherwise `0`.
+
+- **Token precision and recall**
+
+  Let `O` be the multiset overlap between reference and prediction tokens, `P` the number of predicted tokens, and `R` the number of reference tokens:
+
+  `Precision = |O| / P`
+
+  `Recall = |O| / R`
+
+- **Token F1**
+
+  `F1 = 2 × Precision × Recall / (Precision + Recall)`
+
+  F1 is `0` when both precision and recall are `0`.
+
+- **Fact-aware accuracy**
+
+  An answerable case is correct when it is not abstained, is not flagged as a hallucination, contains every required reference token, and contains every reference numeric value within the implemented rounding tolerance. Explanatory wording around the required facts is allowed. For an unanswerable case, correctness requires abstention or a grounded negative answer.
+
+- **BLEU and ROUGE**
+
+  BLEU is the normalized SacreBLEU sentence score with exponential smoothing. ROUGE-1, ROUGE-2, and ROUGE-L use F1 scores over unigram, bigram, and longest-common-subsequence overlap respectively.
+
+- **Lexical semantic similarity**
+
+  The reference and prediction are converted to TF-IDF vectors and compared with cosine similarity:
+
+  `cosine(A, B) = (A · B) / (||A|| × ||B||)`
+
+### TF-IDF retrieval
+
+For each document chunk, TF-IDF weights are calculated for terms and queried with the same vocabulary. The query and each chunk are represented as vectors, then ranked by cosine similarity:
+
+`score(query, chunk) = cosine(TFIDF(query), TFIDF(chunk))`
+
+Only the top `TOP_K` non-zero-score chunks are returned. Retrieval abstention occurs when no chunks are returned or when the top score is below `ABSTAIN_SCORE_THRESHOLD`.
+
+- **Hit@k**: `1` if all evidence keywords are covered by the first `k` retrieved chunks, otherwise `0`.
+- **MRR**: `1 / rank` of the first prefix containing all evidence keywords; `0` if no prefix through rank 5 contains them.
+- **Context precision**: number of the first five chunks containing at least one evidence keyword divided by the number of returned chunks considered, up to five.
+- **Context recall**: number of distinct evidence keywords found in all retrieved chunks divided by the number of distinct evidence keywords.
+
+These retrieval metrics use `evidence_keywords` as transparent lexical proxies; they are not human-annotated gold chunk labels.
+
+### Grounding, hallucination, and HEVA confidence
+
+- **Semantic support** is the maximum TF-IDF cosine similarity between the answer and its cited chunk texts.
+- **Hallucination signal** is raised when a low-support or invented-fact signal is present together with missing evidence keywords, unsupported numeric values, or unsupported capitalized entities. It is a deterministic heuristic, not a human faithfulness judgment.
+- **Deterministic grounding score**:
+
+  `Grounding = 0.5 × SemanticSupport + 0.3 × KeywordCoverage + 0.2 × NumericSupport`
+
+  `KeywordCoverage = covered evidence keywords / total evidence keywords`.
+
+  `NumericSupport = 1` when no answer number is absent from the citations, otherwise `0`. A hallucination forces the final grounding score to `0`; the result is clipped to `[0, 1]`.
+
+- **HEVA confidence**:
+
+  `RetrievalSignal = min(1, Top1Relevance / 0.30)`
+
+  `SupportSignal = min(1, max(0, SemanticSupport))`
+
+  `GroundingSignal = 0` for a hallucination, otherwise `1`.
+
+  `HEVAConfidence = ModelConfidence × (0.4 + 0.6 × RetrievalSignal) × (0.4 + 0.6 × SupportSignal) × GroundingSignal`
+
+  The result is clipped to `[0, 1]`. Abstentions receive confidence `0`.
+
+### Abstention, calibration, and latency
+
+- **Abstention precision**: correct abstentions divided by all predicted abstentions.
+- **Abstention recall**: correct abstentions divided by all expected abstentions.
+- **Abstention F1**: `2 × AbstentionPrecision × AbstentionRecall / (AbstentionPrecision + AbstentionRecall)`.
+- **Expected Calibration Error (ECE)**: confidence values are divided into 10 bins. For each bin `b`:
+
+  `ECE = Σ_b (n_b / N) × |Accuracy_b − MeanConfidence_b|`
+
+- **Brier score**:
+
+  `Brier = (1 / N) × Σ_i (HEVAConfidence_i − Correct_i)²`
+
+  where `Correct_i` is `1` for a fact-aware correct case and `0` otherwise. Lower ECE and Brier are better.
+
+- **Latency** is measured around each client HTTP request with a monotonic timer. The report includes arithmetic mean, median, P95, and P99 percentiles over recorded request latencies.
+
+## Demo
+
+The local frontend is available at `http://127.0.0.1:8000/` after starting the API server.
+
+### Application interface
+
+![HEVA AI user interface](assets/UI.png)
+
+### Uploading a document
+
+![HEVA AI document upload](assets/Upload.png)
+
+### Asking a question and viewing citations
+
+![HEVA AI question and answer view](assets/QnA.png)
+
 ## Current Evaluation Results
 
 Latest verified local results using Ollama with `qwen2.5-coder:14b`. Local model output and latency may vary between runs.
