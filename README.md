@@ -188,6 +188,18 @@ python -m eval.runner --provider ollama --adversarial --no-upload --base http://
 python -m eval.report_phase4
 ```
 
+Generate the benchmark audit reports and deterministic failure clusters:
+
+```bash
+python -m eval.audit --results eval/results/ground_truth_results.jsonl
+```
+
+Audit the benchmark and generate the dataset/adversarial/failure audit files with:
+
+```bash
+python -m eval.audit --annotate
+```
+
 ## Choosing the LLM Provider
 
 The evaluation harness is shared: both providers use the same document, retrieval, prompt construction, datasets, answer normalization, metrics, and reports. Only generation changes.

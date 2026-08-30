@@ -38,13 +38,13 @@ HEVA_qna/
 │   ├── service.py
 │   └── store.py
 ├── data/
-│   ├── eval_reference.md
-│   └── test_document.txt
+│   └── eval_reference.md
 ├── dataset/
 │   ├── ground_truth.jsonl
 │   └── adversarial.jsonl
 ├── eval/
 │   ├── adversarial.py
+│   ├── audit.py
 │   ├── calibration.py
 │   ├── failure_analysis.py
 │   ├── judge.py
@@ -58,7 +58,7 @@ HEVA_qna/
 ├── .env.example
 ├── README.md
 ├── requirements.txt
-└── scripts and supplementary analysis files
+└── generated results and reports
 ```
 
 Important generated artifacts under `eval/results/` are ignored by Git but are produced locally by the evaluator. `reports/` contains committed/generated Markdown and supplementary analysis outputs. `.venv/`, `.env`, caches, and temporary debug files are excluded by `.gitignore`.
@@ -121,6 +121,10 @@ Responsibilities: answer metrics, strict/fact-aware correctness, abstention stat
 
 Purpose: Generate the current professional `reports/evaluation_report.md` from both result JSONL files, including ground-truth and adversarial summaries, category breakdowns, and worst cases.
 
+### `eval/audit.py`
+
+Purpose: Audit dataset coverage, annotate question-specific `test_intent` values, classify the existing adversarial benchmark, and produce dataset, adversarial, and deterministic failure-mode reports.
+
 ### `eval/adversarial.py`
 
 Purpose: Generate `dataset/adversarial.jsonl` from the ground-truth set using irrelevant-context, instruction-injection, paraphrase, and subtle factual-error transformations.
@@ -143,15 +147,15 @@ Purpose: Save a Phase 4 baseline and compare later ground-truth runs. Threshold 
 
 ### `dataset/ground_truth.jsonl`
 
-Purpose: 60 hand-authored evaluation cases with expected answers, answerability, category, difficulty, and evidence keywords.
+Purpose: 60 evaluation cases with expected answers, answerability, category, difficulty, evidence keywords, and question-specific `test_intent`. It does not contain independently human-annotated gold chunks.
 
 ### `dataset/adversarial.jsonl`
 
 Purpose: 122 fixed adversarial cases with a `parent_id`, adversarial category, and inherited evaluation metadata.
 
-### `data/eval_reference.md` and `data/test_document.txt`
+### `data/eval_reference.md`
 
-Purpose: Reference document used for evaluation and a small local document useful for manual smoke tests.
+Purpose: Reference document uploaded for the reproducible ground-truth and adversarial evaluations.
 
 ### `tests/`
 
