@@ -390,7 +390,7 @@ def run(path=None, base="http://127.0.0.1:8000", limit=None, upload_ref=True,
                             "citations",
                             [],
                         ),
-                        "correct": bool(strict_correct),
+                        "correct": bool(fact_correct),
                         "strict_correct": bool(strict_correct),
                         "fact_aware_correct": bool(fact_correct),
                         "evaluation_state": state,
@@ -415,7 +415,7 @@ def run(path=None, base="http://127.0.0.1:8000", limit=None, upload_ref=True,
                 print(
                     f"[{i:03d}/{len(rows)}] "
                     f"{row['id']} "
-                    f"{'PASS' if strict_correct else 'FAIL'}",
+                    f"{'PASS' if fact_correct else 'FAIL'}",
                     flush=True,
                 )
 

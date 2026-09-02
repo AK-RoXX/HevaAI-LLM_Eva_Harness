@@ -14,7 +14,12 @@ def cluster_failures(results):
     Returns: dict mapping failure mode -> list of failed test cases
     """
 
-    failures = [r for r in results if r.get("status") == "ok" and not r.get("correct")]
+    failures = [
+        r
+        for r in results
+        if r.get("status") == "ok"
+        and not r.get("fact_aware_correct", r.get("correct"))
+    ]
 
     if not failures:
         return {}
