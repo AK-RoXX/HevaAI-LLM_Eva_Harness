@@ -59,7 +59,6 @@ class QAService:
                         "text": chunk.text,
                         "document_id": chunk.document_id,
                     }
-                    for rank, (chunk, score) in enumerate(retrieved, 1)
                     for rank, (chunk, score, lexical_score, semantic_score) in enumerate(retrieved, 1)
                 ],
                 retrieval_threshold=settings.abstain_score_threshold,
@@ -72,8 +71,7 @@ class QAService:
 
         evidence = [
             (c.chunk_id, c.text, s)
-            for c, s, _, _ in retrieved
-                    for c, s, _, _ in retrieved
+                for c, s, _, _ in retrieved
         ]
 
         result = active_llm.answer(
@@ -91,7 +89,7 @@ class QAService:
                     min(1, s),
                 ),
             )
-            for c, s in retrieved
+            for c, s, _, _ in retrieved
         ]
 
         response = QAResponse(
@@ -118,7 +116,6 @@ class QAService:
                     "text": chunk.text,
                     "document_id": chunk.document_id,
                 }
-                for rank, (chunk, score) in enumerate(retrieved, 1)
                     for rank, (chunk, score, lexical_score, semantic_score) in enumerate(retrieved, 1)
             ],
             retrieval_threshold=settings.abstain_score_threshold,
