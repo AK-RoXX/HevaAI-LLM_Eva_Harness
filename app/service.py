@@ -30,7 +30,7 @@ class QAService:
                 "No LLM provider is configured."
             )
 
-        retrieved = self.store.search(
+        retrieved = self.store.search_with_scores(
             question,
             settings.top_k,
         )
@@ -60,6 +60,7 @@ class QAService:
                         "document_id": chunk.document_id,
                     }
                     for rank, (chunk, score) in enumerate(retrieved, 1)
+                    for rank, (chunk, score, lexical_score, semantic_score) in enumerate(retrieved, 1)
                 ],
                 retrieval_threshold=settings.abstain_score_threshold,
                 retrieval_abstained=True,
@@ -71,7 +72,8 @@ class QAService:
 
         evidence = [
             (c.chunk_id, c.text, s)
-            for c, s in retrieved
+            for c, s, _, _ in retrieved
+                    for c, s, _, _ in retrieved
         ]
 
         result = active_llm.answer(
@@ -117,6 +119,7 @@ class QAService:
                     "document_id": chunk.document_id,
                 }
                 for rank, (chunk, score) in enumerate(retrieved, 1)
+                    for rank, (chunk, score, lexical_score, semantic_score) in enumerate(retrieved, 1)
             ],
             retrieval_threshold=settings.abstain_score_threshold,
             retrieval_abstained=False,

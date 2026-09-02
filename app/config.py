@@ -24,7 +24,11 @@ class Settings(BaseSettings):
 
     # Retrieval
     top_k: int = 5
-    abstain_score_threshold: float = 0.08
+    retrieval_candidate_k: int = 10
+    lexical_weight: float = 0.45
+    semantic_weight: float = 0.55
+    abstain_score_threshold: float = 0.20
+    embedding_model: str = "all-MiniLM-L6-v2"
 
     model_config = SettingsConfigDict(
         env_file=".env",

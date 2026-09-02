@@ -6,7 +6,10 @@ from app.config import settings
 
 class GroundingJudgment(BaseModel):
     supported: bool
+    completeness: str = "complete"
+    contradiction: bool = False
     unsupported_claims: list[str] = Field(default_factory=list)
+    missing_facts: list[str] = Field(default_factory=list)
     rationale: str
 
 
@@ -23,7 +26,9 @@ The EVIDENCE is the only source of truth. Do not use outside knowledge.
 QUESTION: {question}
 ANSWER: {answer}
 EVIDENCE:\n{evidence}
-Return supported=true only if all material factual claims are supported. Identify unsupported claims explicitly."""
+Check every material claim, including names, numbers, dates, negation, qualifiers, and relationships.
+Set supported=true only if all claims are supported. Set completeness to complete, partial, or unsupported.
+Set contradiction=true if the answer conflicts with the evidence. Identify unsupported claims and missing facts explicitly."""
         r = self.client.models.generate_content(
             model=settings.gemini_model,
             contents=prompt,
